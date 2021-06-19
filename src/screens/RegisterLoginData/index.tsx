@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { useNavigation } from '@react-navigation/native';
 import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,6 +30,10 @@ const schema = Yup.object().shape({
 })
 
 export function RegisterLoginData() {
+  const storageKey = '@passmanager:logins';
+
+  // const navigation = useNavigation();
+
   const {
     control,
     handleSubmit,
@@ -36,7 +41,9 @@ export function RegisterLoginData() {
     formState: {
       errors
     }
-  } = useForm();
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
 
   async function handleRegister(formData: FormData) {
     const newLoginData = {
@@ -45,6 +52,18 @@ export function RegisterLoginData() {
     }
 
     // Save data on AsyncStorage
+    const dataStorage = await AsyncStorage.getItem(storageKey);
+    const formattedData = dataStorage ? JSON.parse(dataStorage) : [];
+
+    const newStorageData = [
+      ...formattedData,
+      newLoginData
+    ];
+
+    await AsyncStorage.setItem(storageKey, JSON.stringify(newStorageData));
+    
+    reset();
+    // navigation.navigate('Home');
   }
 
   return (
@@ -61,7 +80,7 @@ export function RegisterLoginData() {
             title="Título"
             name="title"
             error={
-              // message error here
+              errors.title && errors.title.message
             }
             control={control}
             placeholder="Escreva o título aqui"
@@ -72,7 +91,7 @@ export function RegisterLoginData() {
             title="Email"
             name="email"
             error={
-              // message error here
+              errors.email && errors.email.message
             }
             control={control}
             placeholder="Escreva o Email aqui"
@@ -84,7 +103,7 @@ export function RegisterLoginData() {
             title="Senha"
             name="password"
             error={
-              // message error here
+              errors.password && errors.password.message
             }
             control={control}
             secureTextEntry
